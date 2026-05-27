@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Local Service Provider</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}">
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <h1>🏠 Local Service Provider</h1>
+
+        <p>
+            Register your services and track providers live on map
+        </p>
+
+    </div>
+
+    <!-- TOP BUTTONS -->
+
+    <div class="tabs">
+
+        <button class="tab active"
+        onclick="showTab('account',this)">
+            🔐 Account
+        </button>
+
+        <button class="tab"
+        onclick="showTab('register',this)">
+            📈 Register Service
+        </button>
+
+        <button class="tab"
+        onclick="showTab('mapTab',this)">
+            🗺️ Live Map
+        </button>
+
+        <button class="tab"
+        onclick="showTab('providers',this)">
+            👥 Providers
+        </button>
+
+        <button class="tab"
+        onclick="showTab('bookings',this)">
+            📅 My Bookings
+        </button>
+
+        <button class="tab"
+        onclick="showTab('providerBookings',this)">
+            🛠️ Provider Bookings
+        </button>
+
+    </div>
+
+    <!-- ACCOUNT -->
+
+    <div id="account"
+    class="tab-content active">
+
+        <div class="auth-box">
+
+            <div class="auth-buttons">
+
+                <button class="btn"
+                onclick="showAuth('login')">
+                    🔐 Login
+                </button>
+
+                <button class="btn green-btn"
+                onclick="showAuth('signup')">
+                    📝 Signup
+                </button>
+
+            </div>
+
+            <!-- LOGIN -->
+
+            <div id="loginForm">
+
+                <h2>🔐 Login</h2>
+
+                <input type="email"
+                placeholder="Email">
+
+                <input type="password"
+                placeholder="Password">
+
+                <button class="btn">
+                    Login
+                </button>
+
+            </div>
+
+            <!-- SIGNUP -->
+
+            <div id="signupForm"
+            style="display:none;">
+
+                <h2>📝 Signup</h2>
+
+                <input type="text"
+                placeholder="Full Name">
+
+                <input type="email"
+                placeholder="Email">
+
+                <input type="password"
+                placeholder="Password">
+
+                <select>
+                    <option>Customer</option>
+                    <option>Provider</option>
+                </select>
+
+                <button class="btn green-btn">
+                    Create Account
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- REGISTER -->
+
+    <div id="register"
+    class="tab-content">
+
+        <div class="service-box">
+
+            <h2>📈 Register Your Service</h2>
+
+            <label>Phone Number *</label>
+            <input type="text">
+
+            <label>Service Type *</label>
+
+            <select>
+                <option>Select Service</option>
+                <option>Plumber</option>
+                <option>Electrician</option>
+                <option>Cleaner</option>
+                <option>Painter</option>
+            </select>
+
+            <label>Experience (Years)</label>
+            <input type="number">
+
+            <label>Rate (₹ per hour)</label>
+            <input type="number">
+
+            <label>Live Location</label>
+
+            <button class="btn">
+                📍 Get Current Location
+            </button>
+
+            <label>Areas You Serve *</label>
+
+            <input type="text"
+            placeholder="e.g. Civil Lines, Budh Bazaar">
+
+            <small>
+                Separate multiple areas with commas
+            </small>
+
+            <label>Service Description</label>
+
+            <textarea rows="5"
+            placeholder="Describe your services, skills, timings, tools, experience etc."></textarea>
+
+            <label>Availability</label>
+
+            <select>
+                <option>🟢 Online Now</option>
+                <option>🔴 Offline</option>
+            </select>
+
+            <label>Provider Image</label>
+
+            <input type="file">
+
+            <button class="btn">
+                🚀 Register Service
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- MAP -->
+
+    <div id="mapTab"
+    class="tab-content">
+
+        <h2>🗺️ Live Providers Map</h2>
+
+        <div id="map"></div>
+
+    </div>
+
+    <!-- PROVIDERS -->
+
+    <div id="providers"
+    class="tab-content">
+
+        <h2>👥 Providers</h2>
+
+        <input class="search-input"
+        type="text"
+        placeholder="Search providers...">
+
+    </div>
+
+    <!-- BOOKINGS -->
+
+    <div id="bookings"
+    class="tab-content">
+
+        <h2>📅 My Bookings</h2>
+
+    </div>
+
+    <!-- PROVIDER BOOKINGS -->
+
+    <div id="providerBookings"
+    class="tab-content">
+
+        <h2>🛠️ Provider Bookings</h2>
+
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer style="
+        margin-top:40px;
+        padding:30px;
+        background:#222;
+        color:white;
+        text-align:center;
+        border-radius:20px 20px 0 0;
+    ">
+        <h3>🏠 Local Service Provider</h3>
+
+        <p>
+            Find trusted local professionals near you.
+        </p>
+
+        <div style="margin-top:15px;">
+            <p>📧 support@localservice.com</p>
+            <p>📞 +91 7900542343</p>
+        </div>
+
+        <div style="margin-top:15px;">
+            <a href="#" style="color:white; margin:0 10px;">About</a>
+            <a href="#" style="color:white; margin:0 10px;">Help Centre</a>
+            <a href="#" style="color:white; margin:0 10px;">Privacy Policy</a>
+        </div>
+
+        <p style="margin-top:20px; font-size:14px; opacity:0.8;">
+            © 2026 Local Service Provider. All rights reserved.
+        </p>
+    </footer>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
+ 
