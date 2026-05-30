@@ -1,6 +1,7 @@
 import os
 from flask import Flask, request, jsonify, session, render_template
-from flask_mysqldb import MySQL
+import firebase_admin
+from firebase_admin import credentials, firestore
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
@@ -15,13 +16,11 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# MYSQL CONFIG
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = '@Karan2005'
-app.config['MYSQL_DB'] = 'service_app'
+# FIREBASE CONFIG
 
-mysql = MySQL(app)
+cred = credentials.Certificate("firebase-key.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
 # HOME PAGE
 @app.route('/')
@@ -34,26 +33,16 @@ def home():
 def signup():
 
     data = request.json
-    cur = mysql.connection.cursor()
-
     try:
 
-        cur.execute("""
-            INSERT INTO users(
-                name,
-                email,
-                password,
-                user_type
-            )
-            VALUES(%s,%s,%s,%s)
-        """, (
-            data['name'],
-            data['email'],
-            generate_password_hash(data['password']),
-            data['user_type']
-        ))
+        db.collection('users').add({
 
-        mysql.connection.commit()
+            'name': data['name'],
+            'email': data['email'],
+            'password': generate_password_hash(data['password']),
+            'user_type': data['user_type']
+
+        })
 
         return jsonify({
             'message': 'Signup successful'
@@ -65,8 +54,7 @@ def signup():
             'error': str(e)
         }), 400
 
-    finally:
-        cur.close()
+
 
 
 # LOGIN
@@ -75,26 +63,27 @@ def login():
 
     data = request.json
 
-    cur = mysql.connection.cursor()
+    users = db.collection('users') \
+        .where('email', '==', data['email']) \
+        .stream()
 
-    cur.execute("""
-        SELECT id,password,user_type
-        FROM users
-        WHERE email=%s
-    """, (data['email'],))
+    user = None
 
-    user = cur.fetchone()
+    for doc in users:
 
-    cur.close()
+        user = doc.to_dict()
 
-    if user and check_password_hash(user[1], data['password']):
+        user['id'] = doc.id
 
-        session['user_id'] = user[0]
-        session['user_type'] = user[2]
+
+    if user and check_password_hash(user['password'], data['password']):
+
+        session['user_id'] = user['id']
+        session['user_type'] = user['user_type']
 
         return jsonify({
             'message': 'Login success',
-            'user_type': user[2]
+            'user_type': user['user_type']
         })
 
     return jsonify({
@@ -122,8 +111,6 @@ def register_provider():
             'error': 'Login required'
         }), 403
 
-    cur = mysql.connection.cursor()
-
     try:
 
         image = request.files.get('image')
@@ -142,38 +129,21 @@ def register_provider():
 
             image_filename = filename
 
-        cur.execute("""
-            INSERT INTO providers(
-                user_id,
-                service_type,
-                experience,
-                rate,
-                phone,
-                lat,
-                lng,
-                availability,
-                service_areas,
-                service_description,
-                image
-            )
-            VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        """, (
+        db.collection('providers').add({
 
-            session['user_id'],
+            'user_id': session['user_id'],
+            'service_type': request.form.get('serviceType'),
+            'experience': request.form.get('experience'),
+            'rate': request.form.get('rate'),
+            'phone': request.form.get('phone'),
+            'lat': request.form.get('lat'),
+            'lng': request.form.get('lng'),
+            'availability': request.form.get('availability'),
+            'service_areas': request.form.get('serviceAreas'),
+            'service_description': request.form.get('serviceDescription'),
+            'image': image_filename
 
-            request.form.get('serviceType'),
-            request.form.get('experience'),
-            request.form.get('rate'),
-            request.form.get('phone'),
-            request.form.get('lat'),
-            request.form.get('lng'),
-            request.form.get('availability'),
-            request.form.get('serviceAreas'),
-            request.form.get('serviceDescription'),
-            image_filename
-        ))
-
-        mysql.connection.commit()
+        })
 
         return jsonify({
             'message': 'Provider added successfully'
@@ -185,54 +155,26 @@ def register_provider():
             'error': str(e)
         }), 400
 
-    finally:
-        cur.close()
-
 
 # GET PROVIDERS
 @app.route('/providers')
 def get_providers():
-
-    cur = mysql.connection.cursor()
-
-    cur.execute("""
-        SELECT
-            p.id,
-            u.name,
-            p.service_type,
-            p.experience,
-            p.rate,
-            p.phone,
-            p.availability,
-            p.service_areas,
-            p.service_description,
-            p.image
-
-        FROM providers p
-
-        JOIN users u
-        ON p.user_id = u.id
-    """)
-
-    providers = cur.fetchall()
-
-    cur.close()
+    providers_ref = db.collection('providers').stream()
 
     result = []
 
-    for p in providers:
-
+    for doc in providers_ref:
+        p = doc.to_dict()
         result.append({
-            "id": p[0],
-            "name": p[1],
-            "serviceType": p[2],
-            "experience": p[3],
-            "rate": p[4],
-            "phone": p[5],
-            "availability": p[6],
-            "serviceAreas": p[7],
-            "serviceDescription": p[8],
-            "image": p[9]
+            "id": doc.id,
+            "serviceType": p.get('service_type'),
+            "experience": p.get('experience'),
+            "rate": p.get('rate'),
+            "phone": p.get('phone'),
+            "availability": p.get('availability'),
+            "serviceAreas": p.get('service_areas'),
+            "serviceDescription": p.get('service_description'),
+            "image": p.get('image')      
         })
 
     return jsonify(result)
